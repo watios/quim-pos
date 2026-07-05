@@ -1,0 +1,365 @@
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: #f8fafc; /* Gris extra claro (Fondo general) */
+  color: #1e293b;     /* Slate oscuro para excelente lectura */
+}
+
+/* ENCABEZADO INTEGRADO */
+.app-header {
+  background: #ffffff; /* Fondo blanco */
+  color: #1e293b;
+  padding: 12px 16px;
+  border-bottom: 2px solid #b48a1d; /* Dorado ajustado para mejor contraste en fondo claro */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05); /* Sombra suave */
+  display: flex;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: 56px;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex: 1;
+}
+
+.header-rate-badge {
+  background: #f1f5f9;
+  color: #b48a1d;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  border: 1px solid #b48a1d;
+}
+
+.btn-back-nav {
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  color: #b48a1d;
+  cursor: pointer;
+  margin-right: 12px;
+  padding: 4px;
+}
+
+/* CUADRÍCULA DEL MENÚ PRINCIPAL */
+.menu-grid {
+  display: none;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
+  padding: 20px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.menu-grid.active {
+  display: grid;
+}
+
+.menu-item {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px 14px;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.04);
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s;
+}
+
+.menu-item:active, .menu-item:hover {
+  transform: scale(0.98);
+  border-color: #b48a1d;
+}
+
+.menu-icon {
+  font-size: 2.2rem;
+  margin-bottom: 10px;
+}
+
+.menu-label {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #0f172a;
+  margin-bottom: 6px;
+}
+
+.menu-desc {
+  font-size: 0.75rem;
+  color: #64748b;
+  line-height: 1.3;
+}
+
+/* SECCIONES DE CONTENIDO */
+.section-content {
+  display: none;
+  padding: 16px;
+  max-width: 750px;
+  margin: 0 auto;
+}
+
+.section-content.active {
+  display: block;
+}
+
+/* TARJETAS COMPONENTES */
+.card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+}
+
+.card h3 {
+  margin-top: 0;
+  margin-bottom: 14px;
+  font-size: 1.1rem;
+  color: #b48a1d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.section-desc {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-bottom: 16px;
+  line-height: 1.4;
+}
+
+/* FORMULARIOS E INPUTS */
+input[type="text"], input[type="number"], select {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: #ffffff;
+  color: #0f172a;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: #b48a1d;
+  box-shadow: 0 0 0 3px rgba(180, 138, 29, 0.15); /* Efecto focus moderno */
+}
+
+label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+  font-size: 0.85rem;
+  color: #475569;
+  text-transform: uppercase;
+}
+
+/* BOTONES */
+.btn {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  margin-bottom: 10px;
+  transition: opacity 0.15s;
+  text-transform: uppercase;
+}
+
+.btn:active { opacity: 0.85; }
+.btn.primary { background: #b48a1d; color: #ffffff; }
+.btn.success { background: #10b981; color: white; }
+.btn.secondary { background: #e2e8f0; color: #334155; }
+
+.button-group {
+  display: flex;
+  gap: 10px;
+}
+.button-group .btn { flex: 1; }
+
+/* COMPONENTES DE LISTAS */
+.person-list {
+  max-height: 350px;
+  overflow-y: auto;
+  margin-bottom: 15px;
+}
+
+.person-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.person-info .nombre { font-weight: 600; font-size: 0.95rem; color: #0f172a; }
+.person-info .cedula { font-size: 0.8rem; color: #64748b; margin-top: 2px; }
+
+.action-buttons { display: flex; gap: 6px; }
+.btn-action { padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; background: #ffffff; color: #b48a1d; border: 1px solid #b48a1d; font-weight: 500; cursor: pointer; }
+.btn-action.delete { background: #fee2e2; color: #ef4444; border: none; } /* Rojo claro para borrar */
+
+/* REPOSITORIO DE BÚSQUEDA EN TIEMPO REAL (LIVE SEARCH) */
+.live-search-results {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  max-height: 180px;
+  overflow-y: auto;
+  margin-bottom: 14px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+.search-result-item {
+  padding: 10px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.9rem;
+  color: #334155;
+}
+.search-result-item:hover {
+  background: #b48a1d;
+  color: #ffffff;
+}
+
+.selected-badge {
+  background: #f1f5f9;
+  color: #334155;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  margin-bottom: 14px;
+  border-left: 4px solid #b48a1d;
+}
+
+/* CAJA DE TOTALES EN CARRITO */
+.cart-totals-box {
+  background: #f8fafc;
+  padding: 16px;
+  border-radius: 10px;
+  margin-top: 15px;
+  margin-bottom: 15px;
+  border: 1px solid #e2e8f0;
+}
+.totals-display {
+  text-align: right;
+  font-size: 0.95rem;
+}
+.totals-display div { margin-bottom: 4px; }
+.totals-display .grand-total {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: #059669; /* Verde un poco más oscuro para lectura clara en blanco */
+  margin-top: 8px;
+}
+.totals-display .currency-conversion {
+  font-size: 1.1rem;
+  color: #b48a1d;
+  font-weight: 500;
+}
+
+.gold-divider { border: 0; border-top: 1px solid #b48a1d; margin: 15px 0; opacity: 0.3; }
+.cart-table-container { overflow-x: auto; }
+
+/* TABLAS DINÁMICAS */
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  background: #ffffff;
+  font-size: 0.85rem;
+}
+.report-table th, .report-table td {
+  padding: 10px;
+  border: 1px solid #e2e8f0;
+  text-align: left;
+}
+.report-table th {
+  background-color: #f1f5f9;
+  color: #b48a1d;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* STATUS NOTIFICACIÓN */
+.status {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #b48a1d;
+  color: #ffffff;
+  padding: 12px 24px;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  z-index: 1000;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+  display: none;
+}
+
+/* CONTENEDOR ESPECÍFICO DE IMPRESIÓN */
+#printArea { display: none; }
+
+/* ==========================================================================
+   🚨 CONFIGURACIÓN ESTRUCTURAL PARA MEDIOS DE IMPRESIÓN / EMISIÓN PDF
+   ========================================================================== */
+@media print {
+  body > *:not(#printArea) { display: none !important; }
+  body { background: white; color: black; }
+  
+  #printArea {
+    display: block !important;
+    width: 100%;
+    background: white;
+    color: black;
+    font-family: Arial, sans-serif;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .print-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 2px solid #111;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+  }
+  .print-main-title { margin: 0; font-size: 16pt; color: #111; font-weight: bold; }
+  .print-subtitle { margin: 4px 0 0 0; font-size: 10pt; color: #555; }
+  .print-date-badge { font-size: 10pt; text-align: right; }
+  
+  .print-table-report { width: 100%; border-collapse: collapse; margin-top: 15px; }
+  .print-table-report th {
+    background-color: #f2f2f2 !important;
+    color: #000 !important;
+    font-weight: bold;
+    padding: 8px;
+    font-size: 9pt;
+    border: 1px solid #111;
+    text-transform: uppercase;
+  }
+  .print-table-report td { padding: 8px; border: 1px solid #ddd; font-size: 9pt; }
+  .print-footer-signatures { display: flex; justify-content: space-between; margin-top: 50px; page-break-inside: avoid; }
+  .print-signature-box { width: 40%; text-align: center; }
+  .print-line { border-top: 1px solid #111; margin-bottom: 4px; }
+  .print-signature-box p { margin: 0; font-size: 8pt; text-transform: uppercase; }
+}

@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Eternum POS - Sistema de Inventario</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Carga de Dexie.js para almacenamiento indexado local offline -->
+  <script src="dexie.min.js"></script>
+  <!-- 🔽 AQUÍ LA LÍNEA FALTANTE: Enlace al motor lógico de la app 🔽 -->
+  <script src="app.js" defer></script>
+</head>
+<body>
+
+  <!-- ENCABEZADO DE LA APLICACIÓN -->
+  <header class="app-header">
+    <button class="btn-back-nav" id="btnBackToMenu" style="visibility: hidden;">←</button>
+    <h1 id="appTitle">🏠 Eternum Control</h1>
+    <div class="header-rate-badge" id="headerRateDisplay">Tasa: -- VES</div>
+  </header>
+
+  <!-- MENÚ PRINCIPAL EN CUADRÍCULA -->
+  <main class="menu-grid active" id="main-menu">
+    <div class="menu-item" data-target="sec-ventas">
+      <div class="menu-icon">🛒</div>
+      <div class="menu-label">Nueva Venta</div>
+      <div class="menu-desc">Terminal de facturación y búsqueda de artículos.</div>
+    </div>
+    <div class="menu-item" data-target="sec-articulos">
+      <div class="menu-icon">📦</div>
+      <div class="menu-label">Artículos</div>
+      <div class="menu-desc">Crear y editar productos en el stock global.</div>
+    </div>
+    <div class="menu-item" data-target="sec-inventario">
+      <div class="menu-icon">📥</div>
+      <div class="menu-label">Carga Inventario</div>
+      <div class="menu-desc">Ingresar cantidades y lotes de reposición al stock.</div>
+    </div>
+    <div class="menu-item" data-target="sec-categorias">
+      <div class="menu-icon">🏷️</div>
+      <div class="menu-label">Categorías</div>
+      <div class="menu-desc">Organizar productos por líneas comerciales.</div>
+    </div>
+    <div class="menu-item" data-target="sec-clientes">
+      <div class="menu-icon">👥</div>
+      <div class="menu-label">Clientes</div>
+      <div class="menu-desc">Administrar el registro histórico de compradores.</div>
+    </div>
+    <div class="menu-item" data-target="sec-tasa">
+      <div class="menu-icon">💵</div>
+      <div class="menu-label">Tasa Cambiaria</div>
+      <div class="menu-desc">Actualizar cotización de divisa para cálculos en Bs.</div>
+    </div>
+    <div class="menu-item" data-target="sec-facturas">
+      <div class="menu-icon">📄</div>
+      <div class="menu-label">Historial Facturas</div>
+      <div class="menu-desc">Consultar ventas emitidas y exportar reportes en PDF.</div>
+    </div>
+<div class="menu-item" id="menu-item-update" style="background: #f1f5f9; border: 1px solid #b48a1d;">
+  <div class="menu-icon" style="color: #b48a1d;">🔄</div>
+  <div class="menu-label" style="color: #0f172a;">Actualizar App</div>
+  <div class="menu-desc" style="color: #64748b;">Buscar cambios en la red.</div>
+</div>
+    <div class="menu-item" id="menu-item-install" style="display: none; background: #d4af37; color: #111;">
+      <div class="menu-icon">📲</div>
+      <div class="menu-label">Instalar POS</div>
+      <div class="menu-desc">Ejecutar como aplicación nativa fuera del navegador.</div>
+    </div>
+  </main>
+
+  <!-- SECCIÓN 1: TERMINAL DE VENTAS (CARRITO) -->
+  <section class="section-content" id="sec-ventas">
+    <div class="card">
+      <h3>🛒 Carrito de Compras</h3>
+      <p class="section-desc">Busca artículos, aplica descuentos y asocia un cliente para procesar la orden.</p>
+      
+      <label for="saleClientSearch">Asociar Cliente (Buscar por Nombre o Cédula/RIF):</label>
+      <input type="text" id="saleClientSearch" placeholder="Escribe para buscar cliente..." autocomplete="off">
+      <div id="saleClientResults" class="live-search-results"></div>
+      <div id="selectedClientBadge" class="selected-badge">⚠️ Ningún cliente seleccionado (Venta General)</div>
+
+      <hr class="gold-divider">
+
+      <label for="saleItemSearch">Añadir Artículos al Carrito:</label>
+      <input type="text" id="saleItemSearch" placeholder="Buscar por nombre de artículo..." autocomplete="off">
+      <div id="saleItemResults" class="live-search-results"></div>
+
+      <div class="cart-table-container">
+        <table class="report-table" id="cartTable">
+          <thead>
+            <tr>
+              <th>Artículo</th>
+              <th>Cant.</th>
+              <th>Precio u.</th>
+              <th>Desc. Subt</th>
+              <th>Total</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody id="cartTableBody">
+            <!-- Render dinámico -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="cart-totals-box">
+        <label for="cartGlobalDiscount">Descuento Global a Factura ($):</label>
+        <input type="number" id="cartGlobalDiscount" value="0" min="0" step="0.01">
+        
+        <div class="totals-display">
+          <div>Subtotal: <span id="txtSubtotalUSD">0.00</span> $</div>
+          <div>Descuentos: <span id="txtDescuentosUSD">0.00</span> $</div>
+          <div class="grand-total">Total a Pagar: <span id="txtTotalUSD">0.00</span> $</div>
+          <div class="currency-conversion">Equivalente: <span id="txtTotalVES">0.00</span> VES</div>
+        </div>
+      </div>
+
+      <button class="btn success" id="btnProcesarFactura">⚡ Consolidar y Facturar Venta</button>
+    </div>
+  </section>
+
+  <!-- SECCIÓN 2: REGISTRO DE ARTÍCULOS -->
+  <section class="section-content" id="sec-articulos">
+    <div class="card">
+      <h3 id="formArticuloTitle">📦 Crear Nuevo Artículo</h3>
+      <input type="hidden" id="articuloId">
+      
+      <label for="articuloNombre">Nombre del Artículo *</label>
+      <input type="text" id="articuloNombre" placeholder="Ej. Harina de Maíz 1kg">
+      
+      <label for="articuloCategoria">Categoría *</label>
+      <select id="articuloCategoria" class="form-select"></select>
+      
+      <label for="articuloDescripcion">Descripción (Opcional)</label>
+      <input type="text" id="articuloDescripcion" placeholder="Detalles de presentación o marca">
+      
+      <label for="articuloPrecio">Precio de Venta ($ USD) *</label>
+      <input type="number" id="articuloPrecio" placeholder="0.00" step="0.01" min="0">
+
+      <button class="btn primary" id="btnGuardarArticulo">Guardar Producto</button>
+      <button class="btn secondary" id="btnCancelarArticuloEdicion" style="display: none;">Cancelar Edición</button>
+    </div>
+
+    <div class="card">
+      <h3>Listado Global de Productos</h3>
+      <input type="text" id="searchArticuloInput" placeholder="🔍 Filtrar por nombre...">
+      <div class="person-list" id="articulosList"></div>
+    </div>
+  </section>
+
+  <!-- SECCIÓN 3: CARGA DE INVENTARIO -->
+  <section class="section-content" id="sec-inventario">
+    <div class="card">
+      <h3>📥 Carga de Inventario (Entradas de Stock)</h3>
+      <p class="section-desc">Incrementa las existencias físicas de los artículos registrados en el sistema.</p>
+      
+      <label for="invItemSelect">Seleccione el Artículo *</label>
+      <select id="invItemSelect" class="form-select"></select>
+      
+      <label for="invCantidad">Cantidad a Ingresar *</label>
+      <input type="number" id="invCantidad" placeholder="Ej. 50" min="1" step="1">
+
+      <button class="btn success" id="btnGuardarCarga">Ingresar Unidades al Stock</button>
+    </div>
+  </section>
+
+  <!-- SECCIÓN 4: GESTIÓN DE CATEGORÍAS -->
+  <section class="section-content" id="sec-categorias">
+    <div class="card">
+      <h3 id="formCatTitle">🏷️ Registrar Categoría</h3>
+      <input type="hidden" id="catId">
+      <label for="catNombre">Nombre de la Categoría *</label>
+      <input type="text" id="catNombre" placeholder="Ej. Víveres, Charcutería, Limpieza">
+      
+      <button class="btn primary" id="btnGuardarCat">Guardar Categoría</button>
+      <button class="btn secondary" id="btnCancelarCatEdicion" style="display: none;">Cancelar</button>
+    </div>
+    <div class="card">
+      <h3>Categorías Activas</h3>
+      <div class="person-list" id="categoriasList"></div>
+    </div>
+  </section>
+
+  <!-- SECCIÓN 5: ADMINISTRACIÓN DE CLIENTES -->
+  <section class="section-content" id="sec-clientes">
+    <div class="card">
+      <h3 id="formClienteTitle">👥 Registrar / Editar Cliente</h3>
+      <input type="hidden" id="clienteId">
+      
+      <label for="clienteNombre">Nombre Completo o Razón Social *</label>
+      <input type="text" id="clienteNombre" placeholder="Ej. Juan Pérez">
+      
+      <div style="display: flex; gap: 8px;">
+        <div style="width: 30%;">
+          <label for="clienteNacionalidad">Tipo Doc *</label>
+          <select id="clienteNacionalidad" class="form-select">
+            <option value="V">V</option>
+            <option value="E">E</option>
+            <option value="J">J</option>
+            <option value="G">G</option>
+          </select>
+        </div>
+        <div style="width: 70%;">
+          <label for="clienteCedula">Cédula o RIF (Solo números) *</label>
+          <input type="text" id="clienteCedula" placeholder="Ej. 25123456">
+        </div>
+      </div>
+
+      <button class="btn primary" id="btnGuardarCliente">Guardar Cliente</button>
+      <button class="btn secondary" id="btnCancelarClienteEdicion" style="display: none;">Cancelar</button>
+    </div>
+    <div class="card">
+      <h3>Padrón de Clientes Registrados</h3>
+      <div class="person-list" id="clientesList"></div>
+    </div>
+  </section>
+
+  <!-- SECCIÓN 6: TASA CAMBIARIA -->
+  <section class="section-content" id="sec-tasa">
+    <div class="card">
+      <h3>💵 Control de Tasa del Sistema</h3>
+      <p class="section-desc">Define el factor multiplicador de conversión monetaria. Afecta en tiempo real al contravalor de todo el inventario y transacciones en curso.</p>
+      
+      <label for="configTasaInput">Valor de la Tasa Oficial (VES / USD):</label>
+      <input type="number" id="configTasaInput" placeholder="Ej. 45.50" step="0.01" min="0.01">
+      
+      <button class="btn primary" id="btnGuardarTasa">Actualizar Tasa Global</button>
+    </div>
+  </section>
+
+  <!-- SECCIÓN 7: HISTORIAL DE FACTURAS (PAGINADA) -->
+  <section class="section-content" id="sec-facturas">
+    <div class="card">
+      <h3>📄 Historial de Facturas Emitidas</h3>
+      <p class="section-desc">Consulta el libro contable digital local indexado en tu dispositivo.</p>
+      
+      <div class="person-list" id="facturasList"></div>
+      
+      <!-- Controles de paginación compactos -->
+      <div class="button-group" style="margin-top: 15px;">
+        <button class="btn secondary" id="btnPrevPage">◀️ Anterior</button>
+        <button class="btn secondary" id="btnNextPage">Siguiente ▶️</button>
+      </div>
+      <div style="text-align: center; margin-top: 8px; font-size: 0.85rem; color: #aaa;" id="lblPaginacion">Página 1</div>
+    </div>
+  </section>
+
+  <!-- COMPONENTE TOAST DE MENSAJES EMERGENTES -->
+  <div class="status" id="toastStatus"></div>
+
+  <!-- ==========================================================================
+     🚨 ÁREA EXCLUSIVA DE RENDERIZADO Y MAQUETACIÓN PDF PARA IMPRESIÓN
+     ========================================================================== -->
+  <div id="printArea">
+    <div class="print-header">
+      <div class="print-title-container">
+        <h1 class="print-main-title">COMPROBANTE DE FACTURACIÓN</h1>
+        <p class="print-subtitle" id="printInvoiceId">FACTURA DE VENTA N°: 0000</p>
+      </div>
+      <div class="print-date-badge" id="printInvoiceMeta">
+        Fecha: --/--/----
+      </div>
+    </div>
+
+    <div style="margin-bottom: 20px; border: 1px solid #ddd; padding: 12px; border-radius: 6px;">
+      <h4 style="margin: 0 0 8px 0; color: #111; font-size: 11pt; text-transform: uppercase;">Datos Legales del Cliente</h4>
+      <p style="margin: 2px 0; font-size: 10pt;" id="printClientName"><strong>Nombre:</strong> Contenedor General</p>
+      <p style="margin: 2px 0; font-size: 10pt;" id="printClientDoc"><strong>Documento ID:</strong> N/A</p>
+    </div>
+
+    <table class="print-table-report">
+      <thead>
+        <tr>
+          <th>Descripción Artículo</th>
+          <th style="text-align: center; width: 15%;">Cant.</th>
+          <th style="text-align: right; width: 20%;">Precio U.</th>
+          <th style="text-align: right; width: 20%;">Descuento</th>
+          <th style="text-align: right; width: 20%;">Total Neto</th>
+        </tr>
+      </thead>
+      <tbody id="printTableBody">
+        <!-- Render dinámico inyectado en caliente antes del print -->
+      </tbody>
+    </table>
+
+    <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+      <div style="width: 50%; border: 1px solid #111; padding: 12px; border-radius: 6px; background: #fafafa;">
+        <table style="width: 100%; font-size: 10pt; border-collapse: collapse;">
+          <tr>
+            <td style="padding: 4px 0;">Subtotal Venta:</td>
+            <td style="text-align: right; font-weight: bold;" id="printSubtotalUSD">0.00 $</td>
+          </tr>
+          <tr>
+            <td style="padding: 4px 0; color: #c62828;">Descuentos Totales:</td>
+            <td style="text-align: right; font-weight: bold; color: #c62828;" id="printDescuentosUSD">0.00 $</td>
+          </tr>
+          <tr style="border-top: 2px solid #111;">
+            <td style="padding: 6px 0; font-size: 11pt; font-weight: bold;">TOTAL OPERACIÓN ($):</td>
+            <td style="text-align: right; font-size: 11pt; font-weight: bold;" id="printTotalUSD">0.00 $</td>
+          </tr>
+          <tr style="background: #eee;">
+            <td style="padding: 6px 4px; font-size: 10pt; font-weight: bold; color:#111;">TOTAL EN BOLÍVARES (VES):</td>
+            <td style="text-align: right; padding: 6px 4px; font-size: 10pt; font-weight: bold; color:#111;" id="printTotalVES">0.00 VES</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <div style="margin-top: 15px; font-size: 8pt; color: #555; text-align: center;" id="printExchangeRateMeta">
+      Tasa de cambio referencial del sistema aplicada a la transacción: 0.00 VES/USD.
+    </div>
+
+    <div class="print-footer-signatures">
+      <div class="print-signature-box">
+        <div class="print-line"></div>
+        <p>Despachador / Caja</p>
+      </div>
+      <div class="print-signature-box">
+        <div class="print-line"></div>
+        <p>Cliente Receptor</p>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
