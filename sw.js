@@ -1,4 +1,4 @@
-const CACHE_NAME = 'quim-pos-cache-v1';
+const CACHE_NAME = 'quim-pos-cache-v1.1';
 const ASSETS = [
   './',
   './index.html',

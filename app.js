@@ -1,7 +1,7 @@
 // =========================================================================
 // 1. CONFIGURACIÓN GLOBAL Y BASE DE DATOS LOCAL (DEXIE.JS)
 // =========================================================================
-const db = new Dexie('QuimDB'); // Nombre de la base de datos actualizado a Quim
+const db = new Dexie('QuimDB'); 
 db.version(1).stores({
   config: 'key',
   categorias: '++id, nombre',
@@ -11,12 +11,12 @@ db.version(1).stores({
 });
 
 // Estado de la Aplicación
-let globalExchangeRate = 560.00; // Tasa inicial ajustada a 560
+let globalExchangeRate = 645.00; // 💵 Tasa ajustada a 645.00 VES
 let currentCart = [];
 let selectedClientId = null;
 let invoicePage = 1;
 const INVOICES_PER_PAGE = 5;
-let deferredPrompt = null; // Almacena el evento de instalación PWA
+let deferredPrompt = null; 
 
 // Función Global de Sanitización (Evita Inyecciones XSS)
 function escapeHtml(str) {
@@ -29,34 +29,33 @@ function escapeHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
-// Orquestador de Arranque Seguro
+// Orquestador de Arranque Seguro (Corregido con await para evitar la condición de carrera)
 document.addEventListener('DOMContentLoaded', async () => {
   await inicializarTasaGlobal();
-  await verificarYSembrarDatos(); // 🌟 Inyección automática de Datos Semilla (Víveres)
+  await verificarYSembrarDatos(); // 🌟 Inyección automática y espera de Datos Semilla
   configurarEnrutamientoMenu();
   configurarAccionesPWA();
   configurarMotoresBusquedaVenta();
   
-  // Carga inicial y renderizado de módulos
+  // Carga inicial y renderizado de módulos una vez que la DB está lista
   actualizarDesplegablesCategorias();
   actualizarDesplegablesArticulos();
   cargarArticulosUI();
   cargarCategoriasUI();
-  cargarClientesUI();
+  cargarClientesUI(); // 👥 Ahora renderiza los clientes sembrados de forma garantizada
   cargarFacturasUI();
 });
 
 // =========================================================================
-// 1.1 FUNCIÓN SEMILLA: COMENTAR O DEJAR PARA INICIALIZACIÓN AUTOMÁTICA
+// 1.1 FUNCIÓN SEMILLA: INICIALIZACIÓN AUTOMÁTICA DE DATOS
 // =========================================================================
 async function verificarYSembrarDatos() {
   const conteoCategorias = await db.categorias.count();
   
-  // Si no existen categorías creadas, asumimos base de datos limpia e inyectamos los víveres
   if (conteoCategorias === 0) {
-    console.log('📦 Inicializando base de datos local con catálogo de víveres referencial...');
+    console.log('📦 Inicializando base de datos local con catálogo de víveres, clientes y facturas...');
     
-    // 1. Registro de las 6 Categorías de Víveres solicitadas
+    // 1. Registro de las 6 Categorías de Víveres
     const c1 = await db.categorias.add({ nombre: 'Charcutería y Lácteos' });
     const c2 = await db.categorias.add({ nombre: 'Carbohidratos y Granos' });
     const c3 = await db.categorias.add({ nombre: 'Enlatados y Conservas' });
@@ -64,41 +63,116 @@ async function verificarYSembrarDatos() {
     const c5 = await db.categorias.add({ nombre: 'Snacks y Confitería' });
     const c6 = await db.categorias.add({ nombre: 'Bebidas y Líquidos' });
 
-    // 2. Registro de los 20 Artículos vinculados con stock inicial referencial
+    // 2. Registro de los 20 Artículos vinculados
     await db.articulos.bulkAdd([
-      // Lácteos y Charcutería (c1)
-      { nombre: 'Queso Blanco Duro (1 kg)', categoriaId: c1.toString(), descripcion: 'Queso llanero apto para rallar o freír', priceUSD: 5.50, stock: 12 },
-      { nombre: 'Jamón de Pierna Estándar (1 kg)', categoriaId: c1.toString(), descripcion: 'Jamón de pierna rebanado', priceUSD: 7.20, stock: 8 },
-      { nombre: 'Leche Completa en Polvo (1 kg)', categoriaId: c1.toString(), descripcion: 'Leche entera instantánea en bolsa', priceUSD: 8.50, stock: 15 },
-      
-      // Carbohidratos y Granos (c2)
-      { nombre: 'Harina de Maíz Precocida (1 kg)', categoriaId: c2.toString(), descripcion: 'Harina tradicional para preparación de arepas', priceUSD: 1.40, stock: 60 },
-      { nombre: 'Arroz Blanco Grano Entero (1 kg)', categoriaId: c2.toString(), descripcion: 'Arroz tipo I de mesa', priceUSD: 1.30, stock: 45 },
-      { nombre: 'Pasta Larga Espagueti (1 kg)', categoriaId: c2.toString(), descripcion: 'Pasta de sémola de trigo duro', priceUSD: 1.25, stock: 40 },
-      { nombre: 'Caraotas Negras Seleccionadas (500g)', categoriaId: c2.toString(), descripcion: 'Granos negros nacionales', priceUSD: 1.50, stock: 25 },
-      { nombre: 'Harina de Trigo Todo Uso (1 kg)', categoriaId: c2.toString(), descripcion: 'Harina refinada para panadería u hogar', priceUSD: 1.45, stock: 30 },
-      
-      // Enlatados y Conservas (c3)
-      { nombre: 'Atún en Aceite Vegetal (140g)', categoriaId: c3.toString(), descripcion: 'Lomitos compactos de atún en lata', priceUSD: 1.80, stock: 35 },
-      { nombre: 'Sardinas en Salsa de Tomate (170g)', categoriaId: c3.toString(), descripcion: 'Sardinas enteras en conserva enlatada', priceUSD: 0.90, stock: 50 },
-      { nombre: 'Maíz Dulce en Granos (200g)', categoriaId: c3.toString(), descripcion: 'Granos de maíz tierno listos para servir', priceUSD: 1.20, stock: 20 },
-      
-      // Salsas y Condimentos (c4)
-      { nombre: 'Mayonesa Clásica (445g)', categoriaId: c4.toString(), descripcion: 'Aderezo cremoso emulsionado tradicional', priceUSD: 2.50, stock: 18 },
-      { nombre: 'Salsa de Tomate Ketchup (397g)', categoriaId: c4.toString(), descripcion: 'Salsa a base de concentrado de tomate dulce', priceUSD: 2.10, stock: 22 },
-      { nombre: 'Aceite Vegetal de Soya (1 Litro)', categoriaId: c4.toString(), descripcion: 'Aceite refinado comestible multiusos', priceUSD: 3.15, stock: 24 },
-      { nombre: 'Sal Refinada de Mesa (1 kg)', categoriaId: c4.toString(), descripcion: 'Sal blanca de mesa molida yodada', priceUSD: 0.60, stock: 40 },
-      
-      // Snacks y Confitería (c5)
-      { nombre: 'Galletas de Soda (Paquete Familiar)', categoriaId: c5.toString(), descripcion: 'Galletas saladas crujientes multipack', priceUSD: 1.95, stock: 28 },
-      { nombre: 'Chocolate con Leche (Barra 100g)', categoriaId: c5.toString(), descripcion: 'Barra de chocolate tradicional de repostería/consumo', priceUSD: 1.50, stock: 35 },
-      { nombre: 'Papas Fritas Onduladas (Bolsa Grande)', categoriaId: c5.toString(), descripcion: 'Snack crujiente sabor original salado', priceUSD: 2.10, stock: 15 },
-      
-      // Bebidas y Líquidos (c6)
-      { nombre: 'Refresco Sabor Cola (2 Litros)', categoriaId: c6.toString(), descripcion: 'Bebida gaseosa azucarada familiar', priceUSD: 2.50, stock: 30 },
-      { nombre: 'Jugo de Naranja Pasteurizado (1L)', categoriaId: c6.toString(), descripcion: 'Bebida cítrica líquida refrigerada con pulpa', priceUSD: 1.80, stock: 14 }
+      { nombre: 'Queso Blanco Duro (1 kg)', categoriaId: c1, descripcion: 'Queso llanero apto para rallar o freír', priceUSD: 5.50, stock: 12 },
+      { nombre: 'Jamón de Pierna Estándar (1 kg)', categoriaId: c1, descripcion: 'Jamón de pierna rebanado', priceUSD: 7.20, stock: 8 },
+      { nombre: 'Leche Completa en Polvo (1 kg)', categoriaId: c1, descripcion: 'Leche entera instantánea en bolsa', priceUSD: 8.50, stock: 15 },
+      { nombre: 'Harina de Maíz Precocida (1 kg)', categoriaId: c2, descripcion: 'Harina tradicional para preparación de arepas', priceUSD: 1.40, stock: 60 },
+      { nombre: 'Arroz Blanco Grano Entero (1 kg)', categoriaId: c2, descripcion: 'Arroz tipo I de mesa', priceUSD: 1.30, stock: 45 },
+      { nombre: 'Pasta Larga Espagueti (1 kg)', categoriaId: c2, descripcion: 'Pasta de sémola de trigo duro', priceUSD: 1.25, stock: 40 },
+      { nombre: 'Caraotas Negras Seleccionadas (500g)', categoriaId: c2, descripcion: 'Granos negros nacionales', priceUSD: 1.50, stock: 25 },
+      { nombre: 'Harina de Trigo Todo Uso (1 kg)', categoriaId: c2, descripcion: 'Harina refinada para panadería u hogar', priceUSD: 1.45, stock: 30 },
+      { nombre: 'Atún en Aceite Vegetal (140g)', categoriaId: c3, descripcion: 'Lomitos compactos de atún en lata', priceUSD: 1.80, stock: 35 },
+      { nombre: 'Sardinas en Salsa de Tomate (170g)', categoriaId: c3, descripcion: 'Sardinas enteras en conserva enlatada', priceUSD: 0.90, stock: 50 },
+      { nombre: 'Maíz Dulce en Granos (200g)', categoriaId: c3, descripcion: 'Granos de maíz tierno listos para servir', priceUSD: 1.20, stock: 20 },
+      { nombre: 'Mayonesa Clásica (445g)', categoriaId: c4, descripcion: 'Aderezo cremoso emulsionado tradicional', priceUSD: 2.50, stock: 18 },
+      { nombre: 'Salsas de Tomate Ketchup (397g)', categoriaId: c4, descripcion: 'Salsa a base de concentrado de tomate dulce', priceUSD: 2.10, stock: 22 },
+      { nombre: 'Aceite Vegetal de Soya (1 Litro)', categoriaId: c4, descripcion: 'Aceite refinado comestible multiusos', priceUSD: 3.15, stock: 24 },
+      { nombre: 'Sal Refinada de Mesa (1 kg)', categoriaId: c4, descripcion: 'Sal blanca de mesa molida yodada', priceUSD: 0.60, stock: 40 },
+      { nombre: 'Galletas de Soda (Paquete Familiar)', categoriaId: c5, descripcion: 'Galletas saladas crujientes multipack', priceUSD: 1.95, stock: 28 },
+      { nombre: 'Chocolate con Leche (Barra 100g)', categoriaId: c5, descripcion: 'Barra de chocolate tradicional de repostería/consumo', priceUSD: 1.50, stock: 35 },
+      { nombre: 'Papas Fritas Onduladas (Bolsa Grande)', categoriaId: c5, descripcion: 'Snack crujiente sabor original salado', priceUSD: 2.10, stock: 15 },
+      { nombre: 'Refresco Sabor Cola (2 Litros)', categoriaId: c6, descripcion: 'Bebida gaseosa azucarada familiar', priceUSD: 2.50, stock: 30 },
+      { nombre: 'Jugo de Naranja Pasteurizado (1L)', categoriaId: c6, descripcion: 'Bebida cítrica líquida refrigerada con pulpa', priceUSD: 1.80, stock: 14 }
     ]);
-    console.log('✅ Base de datos poblada de manera exitosa con el rubro de víveres.');
+
+    // 3. Registro de 25 Clientes Semilla
+    await db.clientes.bulkAdd([
+      { nombre: 'Carlos Mendoza', tipoDoc: 'V', cedula: '12345678' },
+      { nombre: 'María Rodríguez', tipoDoc: 'V', cedula: '87654321' },
+      { nombre: 'Juan Pérez', tipoDoc: 'V', cedula: '11223344' },
+      { nombre: 'Ana Gómez', tipoDoc: 'V', cedula: '55667788' },
+      { nombre: 'Luis Martínez', tipoDoc: 'V', cedula: '99887766' },
+      { nombre: 'Elena Torres', tipoDoc: 'V', cedula: '44332211' },
+      { nombre: 'Pedro Castillo', tipoDoc: 'V', cedula: '66778899' },
+      { nombre: 'Carmen Díaz', tipoDoc: 'V', cedula: '22334455' },
+      { nombre: 'José Hernández', tipoDoc: 'V', cedula: '77665544' },
+      { nombre: 'Sofía Silva', tipoDoc: 'V', cedula: '88990011' },
+      { nombre: 'Diego Acosta', tipoDoc: 'V', cedula: '33445566' },
+      { nombre: 'Laura Morales', tipoDoc: 'V', cedula: '55443322' },
+      { nombre: 'Miguel Rivas', tipoDoc: 'V', cedula: '66554433' },
+      { nombre: 'Patricia Colmenares', tipoDoc: 'V', cedula: '99001122' },
+      { nombre: 'Alejandro Rojas', tipoDoc: 'V', cedula: '44556677' },
+      { nombre: 'Gabriela Espinoza', tipoDoc: 'V', cedula: '15987412' },
+      { nombre: 'Ricardo Vargas', tipoDoc: 'V', cedula: '13645789' },
+      { nombre: 'Vanessa Ortega', tipoDoc: 'V', cedula: '19456123' },
+      { nombre: 'Fernando Sifontes', tipoDoc: 'V', cedula: '11025896' },
+      { nombre: 'Daniela Benítez', tipoDoc: 'V', cedula: '22456789' },
+      { nombre: 'Manuel Miranda', tipoDoc: 'V', cedula: '14785236' },
+      { nombre: 'Beatriz Fuentes', tipoDoc: 'V', cedula: '16951753' },
+      { nombre: 'Javier Palacios', tipoDoc: 'V', cedula: '18523964' },
+      { nombre: 'Natalia Gutiérrez', tipoDoc: 'V', cedula: '20147369' },
+      { nombre: 'Roberto Chirinos', tipoDoc: 'V', cedula: '12369874' }
+    ]);
+
+    // Recuperamos entidades para estructurar facturas válidas
+    const articulosDB = await db.articulos.toArray();
+    const clientesDB = await db.clientes.toArray();
+    const facturasSemilla = [];
+
+    // 4. Generación y Registro Semilla de 30 Facturas
+    for (let i = 1; i <= 30; i++) {
+      const clienteAsignado = clientesDB[(i - 1) % clientesDB.length];
+      const art1 = articulosDB[(i * 2) % articulosDB.length];
+      const art2 = articulosDB[(i * 3) % articulosDB.length];
+
+      const qty1 = (i % 3) + 1;
+      const qty2 = (i % 2) + 1;
+
+      const carritoSimulado = [
+        {
+          articuloId: art1.id,
+          nombre: art1.nombre,
+          priceUSD: art1.priceUSD,
+          maxStock: art1.stock,
+          qty: qty1,
+          itemDiscountUSD: 0
+        }
+      ];
+
+      if (i % 2 === 0) {
+        carritoSimulado.push({
+          articuloId: art2.id,
+          nombre: art2.nombre,
+          priceUSD: art2.priceUSD,
+          maxStock: art2.stock,
+          qty: qty2,
+          itemDiscountUSD: 0
+        });
+      }
+
+      let subtotal = 0;
+      carritoSimulado.forEach(item => subtotal += (item.qty * item.priceUSD));
+      
+      const descuentoGlobal = i % 5 === 0 ? 1.00 : 0; 
+      const totalUSD = Math.max(0, subtotal - descuentoGlobal);
+      const fechaCalculada = new Date(Date.now() - (30 - i) * 3600000 * 8).toISOString();
+
+      facturasSemilla.push({
+        fecha: fechaCalculada,
+        clienteId: clienteAsignado.id,
+        items: carritoSimulado,
+        subtotalUSD: subtotal,
+        descuentoUSD: descuentoGlobal,
+        totalUSD: totalUSD,
+        tasaAplicada: globalExchangeRate,
+        totalVES: totalUSD * globalExchangeRate
+      });
+    }
+
+    await db.facturas.bulkAdd(facturasSemilla);
+    console.log('✅ Base de datos poblada de manera exitosa.');
   }
 }
 
@@ -108,9 +182,9 @@ async function verificarYSembrarDatos() {
 async function inicializarTasaGlobal() {
   const record = await db.config.get('tasa');
   if (record) {
-    globalExchangeRate = parseFloat(record.value) || 560.00;
+    globalExchangeRate = parseFloat(record.value) || 645.00;
   } else {
-    await db.config.put({ key: 'tasa', value: 560.00 });
+    await db.config.put({ key: 'tasa', value: 645.00 });
   }
   document.getElementById('headerRateDisplay').innerText = `Tasa: ${globalExchangeRate.toFixed(2)} VES`;
   document.getElementById('configTasaInput').value = globalExchangeRate;
@@ -134,7 +208,7 @@ document.getElementById('btnGuardarTasa').addEventListener('click', async () => 
 function configurarEnrutamientoMenu() {
   document.querySelectorAll('.menu-item').forEach(item => {
     item.addEventListener('click', () => {
-      if (item.id === 'menu-item-update' || item.id === 'menu-item-install') return;
+      if (item.id === 'menu-item-update' || item.id === 'menu-item-install') { return; }
 
       const targetId = item.dataset.target;
       if (!targetId) return;
@@ -151,7 +225,7 @@ function configurarEnrutamientoMenu() {
       if (targetId === 'sec-articulos') { cargarArticulosUI(); resetFormArticulo(); actualizarDesplegablesCategorias(); }
       if (targetId === 'sec-inventario') { actualizarDesplegablesArticulos(); }
       if (targetId === 'sec-categorias') { cargarCategoriasUI(); resetFormCat(); }
-      if (targetId === 'sec-clientes') { cargarClientesUI(); resetFormCliente(); }
+      if (targetId === 'sec-clientes') { document.getElementById('searchClienteInput').value = ''; cargarClientesUI(); resetFormCliente(); }
       if (targetId === 'sec-facturas') { cargarFacturasUI(); }
     });
   });
@@ -160,7 +234,7 @@ function configurarEnrutamientoMenu() {
     document.querySelectorAll('.section-content').forEach(sec => sec.classList.remove('active'));
     document.getElementById('main-menu').classList.add('active');
     document.getElementById('btnBackToMenu').style.visibility = 'hidden';
-    document.getElementById('appTitle').innerText = '🏠 Quim'; // Título principal cambiado a Quim
+    document.getElementById('appTitle').innerText = '🏠 Eternum Control'; 
   });
 }
 
@@ -187,7 +261,7 @@ async function cargarCategoriasUI() {
   const container = document.getElementById('categoriasList');
   container.innerHTML = cats.map(c => `
     <div class="person-item">
-      <div class="person-info"><div class="nombre">🏷️ ${escapeHtml(c.nombre)}</div></div>
+      <div class="person-info"><div class="nombre">🏷️ ${escapeHtml(c.nombre)} [ID: ${c.id}]</div></div>
       <div class="action-buttons">
         <button class="btn-action" onclick="editarCat(${c.id})">Editar</button>
         <button class="btn-action delete" onclick="eliminarCat(${c.id})">Eliminar</button>
@@ -229,7 +303,7 @@ function resetFormCat() {
 }
 
 async function eliminarCat(id) {
-  const vinculados = await db.articulos.where('categoriaId').equals(id.toString()).count();
+  const vinculados = await db.articulos.where('categoriaId').equals(id).count();
   if (vinculados > 0) {
     showStatus(`🚨 Imposible eliminar: existen ${vinculados} artículos bajo esta categoría.`);
     return;
@@ -260,7 +334,7 @@ async function cargarArticulosUI(filterText = '') {
   container.innerHTML = items.map(i => `
     <div class="person-item">
       <div class="person-info">
-        <div class="nombre">${escapeHtml(i.nombre)}</div>
+        <div class="nombre">${escapeHtml(i.nombre)} <span style="font-size:0.8rem; color:#64748b;">[ID: ${i.id}]</span></div>
         <div class="cedula">Precio: <strong>${i.priceUSD.toFixed(2)} $</strong> | Existencia: <strong>${i.stock} unids</strong></div>
       </div>
       <div class="action-buttons">
@@ -287,14 +361,16 @@ document.getElementById('btnGuardarArticulo').addEventListener('click', async ()
     return;
   }
 
+  const parsedCatId = isNaN(parseInt(catId)) ? catId : parseInt(catId);
+
   if (idVal) {
     await db.articulos.update(parseInt(idVal), {
-      nombre, categoriaId: catId, descripcion, priceUSD: precio
+      nombre, categoriaId: parsedCatId, descripcion, priceUSD: precio
     });
     showStatus('🔄 Ficha técnica del artículo actualizada.');
   } else {
     await db.articulos.add({
-      nombre, categoriaId: catId, descripcion, priceUSD: precio, stock: 0
+      nombre, categoriaId: parsedCatId, descripcion, priceUSD: precio, stock: 0
     });
     showStatus('✅ Nuevo artículo indexado en el catálogo.');
   }
@@ -356,16 +432,37 @@ document.getElementById('btnGuardarCarga').addEventListener('click', async () =>
 });
 
 // =========================================================================
-// 7. MÓDULO: CONTROL DE CLIENTES
+// 7. MÓDULO: CONTROL DE CLIENTES (Estructura robusta de búsqueda contra strings/numbers)
 // =========================================================================
-async function cargarClientesUI() {
-  const clientList = await db.clientes.toArray();
+async function cargarClientesUI(filterText = '') {
+  let clientList = await db.clientes.toArray();
+  
+  // Aplicación del motor de búsqueda local robusto contra tipos primitivos
+  if (filterText) {
+    const query = filterText.toLowerCase().trim();
+    clientList = clientList.filter(c => {
+      const idMatch = c.id && c.id.toString() === query;
+      const nombreMatch = c.nombre && c.nombre.toLowerCase().includes(query);
+      const cedulaMatch = c.cedula && c.cedula.toString().includes(query);
+      return idMatch || nombreMatch || cedulaMatch;
+    });
+  }
+
   const container = document.getElementById('clientesList');
+  
+  if (clientList.length === 0) {
+    container.innerHTML = '<p style="text-align:center; color:#64748b; padding:12px;">No se encontraron clientes que coincidan.</p>';
+    return;
+  }
+
   container.innerHTML = clientList.map(c => `
     <div class="person-item">
       <div class="person-info">
-        <div class="nombre">${escapeHtml(c.nombre)}</div>
-        <div class="cedula">Documento: <strong>${c.tipoDoc}-${c.cedula}</strong></div>
+        <div class="nombre">
+          <span style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; margin-right: 6px; font-weight: bold; color: #475569;">ID: ${c.id}</span>
+          ${escapeHtml(c.nombre)}
+        </div>
+        <div class="cedula">Documento: <strong>${escapeHtml(c.tipoDoc || 'V')}-${escapeHtml(c.cedula || '')}</strong></div>
       </div>
       <div class="action-buttons">
         <button class="btn-action" onclick="editarCliente(${c.id})">Editar</button>
@@ -374,6 +471,11 @@ async function cargarClientesUI() {
     </div>
   `).join('');
 }
+
+// Escuchador reactivo asignado al input de filtrado del padrón
+document.getElementById('searchClienteInput').addEventListener('input', (e) => {
+  cargarClientesUI(e.target.value);
+});
 
 document.getElementById('btnGuardarCliente').addEventListener('click', async () => {
   const idVal = document.getElementById('clienteId').value;
@@ -395,6 +497,7 @@ document.getElementById('btnGuardarCliente').addEventListener('click', async () 
     await db.clientes.add(dataCliente);
     showStatus('✅ Cliente registrado en el padrón local.');
   }
+  document.getElementById('searchClienteInput').value = '';
   resetFormCliente(); cargarClientesUI();
 });
 
@@ -408,6 +511,7 @@ async function editarCliente(id) {
   
   document.getElementById('formClienteTitle').innerText = '🔄 Editar Cliente';
   document.getElementById('btnCancelarClienteEdicion').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 document.getElementById('btnCancelarClienteEdicion').addEventListener('click', () => { resetFormCliente(); });
@@ -422,6 +526,7 @@ function resetFormCliente() {
 async function eliminarCliente(id) {
   if (confirm('¿Eliminar este cliente del dispositivo?')) {
     await db.clientes.delete(id);
+    document.getElementById('searchClienteInput').value = '';
     cargarClientesUI();
   }
 }
@@ -439,11 +544,11 @@ function configurarMotoresBusquedaVenta() {
     if (!q) { resultsContainer.innerHTML = ''; return; }
 
     const records = await db.clientes.toArray();
-    const filtrados = records.filter(c => c.nombre.toLowerCase().includes(q) || c.cedula.includes(q));
+    const filtrados = records.filter(c => c.id.toString() === q || c.nombre.toLowerCase().includes(q) || c.cedula.toString().includes(q));
 
     resultsContainer.innerHTML = filtrados.map(c => `
       <div class="search-result-item" onclick="seleccionarClienteParaVenta(${c.id})">
-        👥 ${escapeHtml(c.nombre)} [${c.tipoDoc}-${c.cedula}]
+        👥 <strong>[ID: ${c.id}]</strong> ${escapeHtml(c.nombre)} [${c.tipoDoc}-${c.cedula}]
       </div>
     `).join('');
   });
@@ -468,7 +573,7 @@ async function seleccionarClienteParaVenta(id) {
   const c = await db.clientes.get(id);
   if (!c) return;
   selectedClientId = c.id;
-  document.getElementById('selectedClientBadge').innerText = `✅ Cliente: ${c.nombre}`;
+  document.getElementById('selectedClientBadge').innerText = `✅ Cliente: [ID: ${c.id}] ${c.nombre}`;
   document.getElementById('saleClientSearch').value = '';
   document.getElementById('saleClientResults').innerHTML = '';
 }
@@ -506,7 +611,6 @@ async function agregarArticuloAlCarrito(id) {
 function renderCarrito() {
   const tbody = document.getElementById('cartTableBody');
   if (currentCart.length === 0) {
-    // TEMA CLARO: Modificado color a gris pizarra (#64748b) para una legibilidad óptima sobre fondo claro
     tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#64748b;">El carrito de compras está vacío.</td></tr>`;
     calcularTotalesCarrito();
     return;
@@ -518,11 +622,10 @@ function renderCarrito() {
       <tr>
         <td><strong>${escapeHtml(c.nombre)}</strong></td>
         <td>
-          <input type="number" value="${c.qty}" min="1" max="${c.maxStock}" style="width:70px; margin:0; padding:6px;">
+          <input type="number" value="${c.qty}" min="1" max="${c.maxStock}" style="width:70px; margin:0; padding:6px;" onchange="cambiarCantidadItem(${idx}, this.value)">
         </td>
         <td>${c.priceUSD.toFixed(2)} $</td>
         <td>
-          <!-- TEMA CLARO: Modificado color a un rojo oscuro de alta visibilidad (#dc2626) para alertas de descuento -->
           <input type="number" value="${c.itemDiscountUSD}" min="0" step="0.01" style="width:80px; margin:0; padding:6px; color:#dc2626;" onchange="cambiarDescuentoItem(${idx}, this.value)">
         </td>
         <td><strong>${subtotalItem.toFixed(2)} $</strong></td>
@@ -659,19 +762,16 @@ async function cargarFacturasUI() {
 
   const container = document.getElementById('facturasList');
   if (paginados.length === 0) {
-    // TEMA CLARO: Ajustado color de texto sin registros a gris pizarra (#64748b)
     container.innerHTML = '<p style="text-align:center; color:#64748b;">No hay registros contables en este bloque.</p>';
     return;
   }
 
   const listClientes = await db.clientes.toArray();
-  const clientMap = new Map(listClientes.map(c => [c.id, `${c.nombre} (${c.tipoDoc}-${c.cedula})`]));
+  const clientMap = new Map(listClientes.map(c => [c.id, `${c.nombre} (${c.tipoDoc}-${c.cedula}) [ID: ${c.id}]`]));
 
   container.innerHTML = paginados.map(f => `
     <div class="person-item" style="flex-direction: column; align-items: flex-start; gap: 8px;">
-      <!-- TEMA CLARO: Borde inferior cambiado a gris claro (#e2e8f0) para separar limpiamente sobre fondos claros -->
       <div style="display:flex; justify-content:space-between; width:100%; border-bottom:1px solid #e2e8f0; padding-bottom:4px;">
-        <!-- TEMA CLARO: Ajustado tono de número de factura a ámbar/marrón oscuro (#b45309) para mejorar contraste -->
         <span style="color:#b45309; font-weight:bold;">🧾 Factura N°: 00${f.id}</span>
         <span style="font-size:0.8rem; color:#64748b;">📅 ${f.fecha.substring(0,10)}</span>
       </div>
@@ -703,8 +803,13 @@ async function imprimirFacturaPDF(id) {
   
   if (f.clienteId) {
     const c = await db.clientes.get(f.clienteId);
-    document.getElementById('printClientName').innerHTML = `<strong>Razón Social:</strong> ${escapeHtml(c.nombre)}`;
-    document.getElementById('printClientDoc').innerHTML = `<strong>Cédula / RIF:</strong> ${c.tipoDoc}-${c.cedula}`;
+    if (c) {
+      document.getElementById('printClientName').innerHTML = `<strong>Razón Social:</strong> ${escapeHtml(c.nombre)} (ID: ${c.id})`;
+      document.getElementById('printClientDoc').innerHTML = `<strong>Cédula / RIF:</strong> ${c.tipoDoc}-${c.cedula}`;
+    } else {
+      document.getElementById('printClientName').innerHTML = `<strong>Razón Social:</strong> CLIENTE REMOVIDO / YA NO EXISTE`;
+      document.getElementById('printClientDoc').innerHTML = `<strong>Cédula / RIF:</strong> N/A`;
+    }
   } else {
     document.getElementById('printClientName').innerHTML = `<strong>Razón Social:</strong> CLIENTE GENERAL CONTADOR`;
     document.getElementById('printClientDoc').innerHTML = `<strong>Cédula / RIF:</strong> COMPRA DE MOSTRADOR`;
@@ -751,9 +856,6 @@ function configurarAccionesPWA() {
       if (!deferredPrompt) return;
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') {
-        console.log('El usuario aceptó instalar el sistema POS.');
-      }
       deferredPrompt = null;
       btnInstall.style.display = 'none';
     });
