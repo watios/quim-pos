@@ -83,7 +83,7 @@ async function verificarYSembrarDatos() {
       { nombre: 'Galletas de Soda (Paquete Familiar)', categoriaId: c5, descripcion: 'Galletas saladas crujientes multipack', priceUSD: 1.95, stock: 28 },
       { nombre: 'Chocolate con Leche (Barra 100g)', categoriaId: c5, descripcion: 'Barra de chocolate tradicional de repostería/consumo', priceUSD: 1.50, stock: 35 },
       { nombre: 'Papas Fritas Onduladas (Bolsa Grande)', categoriaId: c5, descripcion: 'Snack crujiente sabor original salado', priceUSD: 2.10, stock: 15 },
-      { nombre: 'Refresco Sabor Cola (2 Litros)', categoriaId: c6, descripcion: 'Bebida gaseosa azucarada familiar', priceUSD: 2.50, stock: 30 },
+      { nombre: 'Refresco Sabor Cola (2 Litros)', categoriaId: c6, descripcion: 'Bebida gaseosa azucharada familiar', priceUSD: 2.50, stock: 30 },
       { nombre: 'Jugo de Naranja Pasteurizado (1L)', categoriaId: c6, descripcion: 'Bebida cítrica líquida refrigerada con pulpa', priceUSD: 1.80, stock: 14 }
     ]);
 
@@ -234,7 +234,7 @@ function configurarEnrutamientoMenu() {
     document.querySelectorAll('.section-content').forEach(sec => sec.classList.remove('active'));
     document.getElementById('main-menu').classList.add('active');
     document.getElementById('btnBackToMenu').style.visibility = 'hidden';
-    document.getElementById('appTitle').innerText = '🏠 Eternum Control'; 
+    document.getElementById('appTitle').innerText = '🏠 Quim Control'; 
   });
 }
 
@@ -649,6 +649,9 @@ function cambiarCantidadItem(idx, val) {
   renderCarrito();
 }
 
+// =========================================================================
+// CORREGIDO: Declaración de precioBruto sin espacios en blanco ilegales
+// =========================================================================
 function cambiarDescuentoItem(idx, val) {
   const desc = parseFloat(val) || 0;
   const precioBruto = currentCart[idx].qty * currentCart[idx].priceUSD;
@@ -848,7 +851,7 @@ function configurarAccionesPWA() {
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
-    if (btnInstall) btnInstall.style.display = 'block';
+    if (btnInstall) btnInstall.style.display = 'flex';
   });
 
   if (btnInstall) {
@@ -856,6 +859,7 @@ function configurarAccionesPWA() {
       if (!deferredPrompt) return;
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
+      console.log(`Resultado de la instalación de Quim: ${outcome}`);
       deferredPrompt = null;
       btnInstall.style.display = 'none';
     });

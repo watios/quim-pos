@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Eternum POS - Sistema de Inventario</title>
+  <title>Quim - POS</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
   <script src="dexie.min.js"></script>
   <script src="app.js" defer></script>
 </head>
@@ -12,7 +13,7 @@
 
   <header class="app-header">
     <button class="btn-back-nav" id="btnBackToMenu" style="visibility: hidden;">←</button>
-    <h1 id="appTitle">🏠 Eternum Control</h1>
+    <h1 id="appTitle">🏠 Quim Control</h1>
     <div class="header-rate-badge" id="headerRateDisplay">Tasa: -- VES</div>
   </header>
 
@@ -64,16 +65,11 @@
     </div>
   </main>
 
-  <!-- =========================================================================
-     MÓDULO DE VENTAS (TERMINAL POS PROFESIONAL EN DOS COLUMNAS)
-     ========================================================================= -->
   <section class="section-content" id="sec-ventas">
     <div class="pos-layout-container">
       
-      <!-- Panel Lateral Izquierdo: Gestión de Parámetros y Filtros -->
       <div class="pos-panel-sidebar">
         
-        <!-- Bloque Identificación de Cliente -->
         <div class="pos-section-card">
           <div class="pos-card-header">
             <span class="pos-card-icon">👥</span>
@@ -89,7 +85,6 @@
           </div>
         </div>
 
-        <!-- Bloque Selección de Inventario -->
         <div class="pos-section-card">
           <div class="pos-card-header">
             <span class="pos-card-icon">🔍</span>
@@ -104,7 +99,6 @@
           </div>
         </div>
 
-        <!-- Bloque Modificadores Comerciales -->
         <div class="pos-section-card">
           <div class="pos-card-header">
             <span class="pos-card-icon">🏷️</span>
@@ -118,7 +112,6 @@
 
       </div>
 
-      <!-- Panel Principal Derecho: Carrito Dinámico y Liquidación -->
       <div class="pos-panel-main">
         <div class="pos-section-card flex-main-card">
           <div class="pos-card-header flex-header">
@@ -129,7 +122,6 @@
             <span class="pos-system-tag">Terminal Activa</span>
           </div>
           
-          <!-- Tabla de Artículos Agregados -->
           <div class="table-responsive pos-table-wrapper">
             <table class="pos-table" id="cartTable">
               <thead>
@@ -143,12 +135,10 @@
                 </tr>
               </thead>
               <tbody id="cartTableBody">
-                <!-- Gestión por app.js -->
-              </tbody>
+                </tbody>
             </table>
           </div>
 
-          <!-- Pie del Módulo: Cuadro de Totales Multimoneda -->
           <div class="pos-footer-summary">
             <div class="summary-panel pos-custom-summary">
               <div class="summary-row">
@@ -176,7 +166,6 @@
               </div>
             </div>
 
-            <!-- Botón de Ejecución de Transacción -->
             <button class="btn primary btn-pos-wide" id="btnProcesarFactura">
               ⚡ Consolidar y Facturar Venta
             </button>
