@@ -737,3 +737,48 @@ input:focus, select:focus, textarea:focus {
     grid-template-columns: 1fr;
   }
 }
+
+/* =========================================================================
+   ADAPTACIÓN PARA MÓVIL: CUADRÍCULA ESTILO DASHBOARD (2 COLUMNAS)
+   ========================================================================= */
+@media (max-width: 600px) {
+  .menu-grid.active {
+    grid-template-columns: repeat(2, 1fr) !important; /* Fuerza estrictamente las 2 columnas */
+    gap: 12px !important;                             /* Reduce el espacio entre botones */
+    padding: 12px !important;                         /* Ajusta el margen periférico */
+  }
+
+  .menu-item {
+    padding: 16px 10px !important;
+    text-align: center !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 110px !important;                     /* Altura uniforme para todos los botones */
+    border-radius: 10px !important;
+  }
+
+  /* Cambia la línea decorativa azul al borde superior para diseño móvil */
+  .menu-item::before {
+    width: 100% !important;
+    height: 4px !important;
+    left: 0 !important;
+    top: 0 !important;
+    bottom: auto !important;
+  }
+
+  .menu-icon {
+    font-size: 1.8rem !important;                     /* Iconos ligeramente más compactos */
+    margin-bottom: 6px !important;
+  }
+
+  .menu-label {
+    font-size: 0.9rem !important;                     /* Texto legible pero adaptado al espacio */
+    line-height: 1.2 !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* Oculta las descripciones largas para conservar una estética limpia de app nativa */
+  .menu-desc {
+    display: none !important; 
+  }
+}
